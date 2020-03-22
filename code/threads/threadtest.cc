@@ -9,11 +9,20 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+#include <stdlib.h>
 #include "copyright.h"
 #include "system.h"
+#include "dllist.h"
+#include <time.h>
 
 // testnum is set in main.cc
 int testnum = 1;
+int n = 5;
+DLList *D;
+
+extern void InsertItem(int n, DLList *D, int thread_num);
+extern void RemoveItem(int n, DLList *D, int thread_num);
+
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -60,10 +69,14 @@ ThreadTest1()
 void
 ThreadTest()
 {
+    D = new DLList();
+    InsertItem(n, D, 0);
+    RemoveItem(n, D, 0);
+
     switch (testnum) {
     case 1:
-	ThreadTest1();
-	break;
+	    ThreadTest1();
+	    break;
     default:
 	printf("No test specified.\n");
 	break;

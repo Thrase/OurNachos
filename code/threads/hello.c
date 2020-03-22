@@ -1,5 +1,6 @@
 #include "hello.h"
 
-void Hello(){
-    printf("Hello Nachos!\n");
+void Hello()
+{
+    std::cout << "Hello Nachos!" << std::endl;
 }

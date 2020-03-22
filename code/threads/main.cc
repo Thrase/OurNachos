@@ -1,4 +1,3 @@
-// :)
 // main.cc 
 //	Bootstrap code to initialize the operating system kernel.
 //
@@ -47,6 +46,9 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+#include <iostream>
+#include <stdlib.h>
+
 #define MAIN
 #include "copyright.h"
 #undef MAIN
@@ -54,6 +56,8 @@
 #include "utility.h"
 #include "system.h"
 #include "hello.h"
+#include "dllist.h"
+
 
 #ifdef THREADS
 extern int testnum;
@@ -65,6 +69,9 @@ extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
+
+extern void InsertItem(int n, DLList *D, int thread_num);
+extern void RemoveItem(int n, DLList *D, int thread_num);
 
 //----------------------------------------------------------------------
 // main
@@ -102,7 +109,7 @@ main(int argc, char **argv)
         break;
       }
     }
-	Hello();
+    Hello();
     ThreadTest();
 #endif
 
