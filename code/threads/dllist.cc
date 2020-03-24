@@ -3,6 +3,8 @@
 #include "copyright.h"
 #include <stdio.h>
 
+extern int kindIncorrect;
+
 DLListElement::DLListElement( void *itemPtr, int sortKey )  // initialize a list element
 {
     prev = next = NULL;
@@ -57,11 +59,11 @@ void DLList::Append(void *item)    // add to tail of list (set key = max_key+1)
 void *DLList::Remove(int *keyPtr)    // remove from head of list
 {
     DLListElement *element = first;
-    void *pointer;
+    void *ptr;
 
     if (IsEmpty())  return NULL;
 
-    pointer = first->item;
+    ptr = first->item;
     if (first == last)    // list had one item before remove
     {
         first = NULL;
@@ -75,7 +77,7 @@ void *DLList::Remove(int *keyPtr)    // remove from head of list
 
     *keyPtr = element->key;    // set *keyPtr to key of the removed item
     delete element;	   // deallocate list element -- no longer needed
-    return pointer;    // return item (or NULL if list is empty)
+    return ptr;    // return item (or NULL if list is empty)
 }
 
 bool DLList::IsEmpty()    // return true if list has elements
@@ -88,6 +90,8 @@ void DLList::SortedInsert(void *item, int sortKey)  // routines to put/get items
     DLListElement *element = new DLListElement(item, sortKey);
     DLListElement *ptr;
 
+    // printf("sortkey: %d\n", sortKey);
+
     if (IsEmpty())
     {
         first = element;
@@ -95,7 +99,7 @@ void DLList::SortedInsert(void *item, int sortKey)  // routines to put/get items
     }
     else if (sortKey < first->key)     // item insert to the head of the list
     {
-        element->key = sortKey;
+        // element->key = sortKey;
         element->next = first;
         element->prev = NULL;
         first->prev = element;
@@ -107,9 +111,11 @@ void DLList::SortedInsert(void *item, int sortKey)  // routines to put/get items
         {
             if (sortKey < ptr->key)
             {
-                element->key = sortKey;
+                // printf("%d %d\n", sortKey, ptr->key);
+                // element->key = sortKey;
                 element->next = ptr;
                 element->prev = ptr->prev;
+                (ptr->prev)->next = element;
                 ptr->prev = element;
                 ptr = element;
                 break;
@@ -117,7 +123,7 @@ void DLList::SortedInsert(void *item, int sortKey)  // routines to put/get items
         }
         if(ptr == NULL)    // item insert to the tail of the list
         {
-            element->key = sortKey;
+            // element->key = sortKey;
             element->next = NULL;
             element->prev = last;
             last->next = element;
@@ -167,14 +173,14 @@ void *DLList::SortedRemove(int sortKey)    // remove first item with key==sortKe
 void DLList::Print()    //print the dllist
 {
     DLListElement *ptr;
-    printf("Now DLList: ");
+    printf("Now DLList:");
     if (IsEmpty())
-        printf("NULL\n");
+        printf(" NULL");
     else
     {
         for (ptr = first; ptr != NULL; ptr = ptr->next)
         {
-            printf("%d ",ptr->key);
+            printf(" %d",ptr->key);
         }
     }
     printf("\n");

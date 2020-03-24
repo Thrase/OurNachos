@@ -1,12 +1,12 @@
-// threadtest.cc 
+// threadtest.cc
 //	Simple test case for the threads assignment.
 //
 //	Create two threads, and have them context switch
-//	back and forth between themselves by calling Thread::Yield, 
+//	back and forth between themselves by calling Thread::Yield,
 //	to illustratethe inner workings of the thread system.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include <stdlib.h>
@@ -15,43 +15,50 @@
 #include "dllist.h"
 #include <time.h>
 
-// testnum is set in main.cc
-int testnum = 1;
+// testNum is set in main.cc
+int testNum = 1;
+int threadNum = 2;
 int n = 5;
+int kindIncorrect = 0;
+
 DLList *D;
 
 extern void InsertItem(int n, DLList *D, int thread_num);
 extern void RemoveItem(int n, DLList *D, int thread_num);
 
-
 //----------------------------------------------------------------------
 // SimpleThread
-// 	Loop 5 times, yielding the CPU to another ready thread 
+// 	Loop 5 times, yielding the CPU to another ready thread
 //	each iteration.
 //
 //	"which" is simply a number identifying the thread, for debugging
 //	purposes.
 //----------------------------------------------------------------------
 
-void
-SimpleThread(int which)
+void SimpleThread(int which)
 {
     int num;
-    
-    for (num = 0; num < 5; num++) {
-	printf("*** thread %d looped %d times\n", which, num);
+
+    for (num = 0; num < 5; num++)
+    {
+        printf("*** thread %d looped %d times\n", which, num);
         currentThread->Yield();
     }
 }
 
+void DLTestThread(int which)
+{
+    InsertItem(n, D, which);
+    RemoveItem(n, D, which);
+}
+
 //----------------------------------------------------------------------
 // ThreadTest1
-// 	Set up a ping-pong between two threads, by forking a thread 
+// 	Set up a ping-pong between two threads, by forking a thread
 //	to call SimpleThread, and then calling SimpleThread ourselves.
 //----------------------------------------------------------------------
 
-void
-ThreadTest1()
+void ThreadTest1()
 {
     DEBUG('t', "Entering ThreadTest1");
 
@@ -61,25 +68,45 @@ ThreadTest1()
     SimpleThread(0);
 }
 
+void ThreadTestDL()
+{
+    DEBUG('t', "Entering ThreadTestDL");
+    
+    D = new DLList();   // global DLList for all threads to operate
+    DLTestThread(0);    // the first thread
+    
+    int i;
+    for (i=1;i<threadNum; i++) 
+    {
+        Thread *t = new Thread("forked thread of DLTestThread");
+        t->Fork(DLTestThread, i);   // fork other threads
+    }
+}
+
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
 //----------------------------------------------------------------------
 
-void
-ThreadTest()
+void ThreadTest()
 {
-    D = new DLList();
-    InsertItem(n, D, 0);
-    RemoveItem(n, D, 0);
+    printf("===== parameters =====\n");
+    printf("testNum\t%d\n", testNum);
+    printf("threadNum\t%d\n", threadNum);
+    printf("n\t%d\n", n);
+    printf("kindIncorrect\t%d\n", kindIncorrect);
+    printf("======================\n");
 
-    switch (testnum) {
+    switch (testNum)
+    {
     case 1:
-	    ThreadTest1();
-	    break;
+        ThreadTest1();
+        break;
+    case 2:
+        ThreadTestDL();     // start Thread for testing
+        break;
     default:
-	printf("No test specified.\n");
-	break;
+        printf("No test specified.\n");
+        break;
     }
 }
-

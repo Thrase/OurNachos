@@ -13,15 +13,18 @@ Both functions should take as arguments the integer N and a pointer to the list.
 #include "thread.h"
 #include <stdio.h>
 
+extern int kindIncorrect;
+
 void InsertItem(int n, DLList *D, int thread_num)
 {
     int i, val;
+    srand(time(NULL));
     for(i = 0; i < n; i++)
     {
-        val = rand() % 100;//insert random number
-        //val = i;
+        val = rand() % 100 + 1; // insert random number
+        // val = i;
         D->SortedInsert(NULL, val);
-        printf("Thread %d inserted item's key=%d\n", thread_num, val);
+        printf("Thread %d inserted item with key=%d\n\n", thread_num, val);
     }
 }
 
@@ -31,8 +34,8 @@ void RemoveItem(int n, DLList *D, int thread_num)
     for(i = 0; i < n; i++)
     {
         D->Remove(&val);
-        printf("Thread %d removed item's key=%d\n", thread_num, val);
+        printf("Thread %d removed item whose key=%d\n\n", thread_num, val);
     }
     if (D->IsEmpty())
-        printf("Thread %d finished removing.\n", thread_num);
+        printf("List empty. Thread %d didn't remove.\n\n", thread_num);
 }
