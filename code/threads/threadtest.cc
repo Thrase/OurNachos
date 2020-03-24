@@ -16,7 +16,7 @@
 #include <time.h>
 
 // testNum is set in main.cc
-int testNum = 1;
+int testNum = 2;
 int threadNum = 2;
 int n = 5;
 int kindIncorrect = 0;
@@ -49,6 +49,13 @@ void SimpleThread(int which)
 void DLTestThread(int which)
 {
     InsertItem(n, D, which);
+
+    // error #1
+    if (kindIncorrect == 1)
+    {
+        printf("[Error #1] Yield between InsertItem() and RemoveItem(). (threadtest.cc)\n");
+        currentThread->Yield();
+    }
     RemoveItem(n, D, which);
 }
 
@@ -71,15 +78,15 @@ void ThreadTest1()
 void ThreadTestDL()
 {
     DEBUG('t', "Entering ThreadTestDL");
-    
-    D = new DLList();   // global DLList for all threads to operate
-    DLTestThread(0);    // the first thread
-    
+
+    D = new DLList(); // global DLList for all threads to operate
+    DLTestThread(0);  // the first thread
+
     int i;
-    for (i=1;i<threadNum; i++) 
+    for (i = 1; i < threadNum; i++)
     {
         Thread *t = new Thread("forked thread of DLTestThread");
-        t->Fork(DLTestThread, i);   // fork other threads
+        t->Fork(DLTestThread, i); // fork other threads
     }
 }
 
@@ -91,11 +98,11 @@ void ThreadTestDL()
 void ThreadTest()
 {
     printf("===== parameters =====\n");
-    printf("testNum\t%d\n", testNum);
-    printf("threadNum\t%d\n", threadNum);
-    printf("n\t%d\n", n);
-    printf("kindIncorrect\t%d\n", kindIncorrect);
-    printf("======================\n");
+    printf("testNum        %d\n", testNum);
+    printf("threadNum      %d\n", threadNum);
+    printf("n              %d\n", n);
+    printf("kindIncorrect  %d\n", kindIncorrect);
+    printf("======================\n\n");
 
     switch (testNum)
     {
@@ -103,7 +110,7 @@ void ThreadTest()
         ThreadTest1();
         break;
     case 2:
-        ThreadTestDL();     // start Thread for testing
+        ThreadTestDL(); // start Thread for testing
         break;
     default:
         printf("No test specified.\n");
