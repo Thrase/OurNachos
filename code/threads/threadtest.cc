@@ -79,15 +79,16 @@ void ThreadTestDL()
 {
     DEBUG('t', "Entering ThreadTestDL");
 
+    srand((unsigned)time(NULL));
     D = new DLList(); // global DLList for all threads to operate
-    DLTestThread(0);  // the first thread
-
+    
     int i;
     for (i = 1; i < threadNum; i++)
     {
-        Thread *t = new Thread("forked thread of DLTestThread");
+        Thread *t = new Thread("forked thread");
         t->Fork(DLTestThread, i); // fork other threads
     }
+    DLTestThread(0);  // the first thread
 }
 
 //----------------------------------------------------------------------

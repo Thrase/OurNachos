@@ -19,7 +19,6 @@ extern Thread *currentThread;
 void InsertItem(int n, DLList *D, int thread_num)
 {
     int i, val;
-    srand(time(NULL));
     for (i = 0; i < n; i++)
     {
         val = rand() % 100 + 1; // insert random number

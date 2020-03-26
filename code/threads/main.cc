@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 		argCount = 1;
 		switch (argv[0][1])
 		{
-		case 'q':
+		case 'q':	// the origin code uses "-q" to pass
 			testNum = atoi(argv[1]);
 			argCount++;
 			break;
