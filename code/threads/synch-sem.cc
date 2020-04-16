@@ -103,68 +103,43 @@ Semaphore::V()
 Lock::Lock(char* debugName) 
 {
     name=debugName;     // just the same..
-    holder = new Thread("holder");
-    lockFlag = FALSE;   // bool.h defines FALSE.
-    lockQueue = new List();   // just the same..
+    holder=new Thread("holder");
+    lockSemaphore = new Semaphore("Semaphore", 0);      // init as 0
 }
 
 Lock::~Lock() 
 {
-    delete lockQueue;       // just the same
+    delete lockSemaphore;
     delete holder;
 }
 
 void Lock::Acquire() 
 {
+
     ASSERT(!isHeldByCurrentThread());   // illegal check.
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
-    while(lockFlag == TRUE)
-    {
-        // still sleep
-        lockQueue->Append(currentThread);
-        currentThread->Sleep();
-    }
-    // now leaving
-    /*
-        1. lock
-        2. tell user
-    */
-    lockFlag=TRUE;
+    
+    lockSemaphore->P();
+
     holder = currentThread;
     // print: current Thread name, lock name (for debugging)
     printf("Thread %s acquires lock %s\n", currentThread->getName(), name);
-        
-    (void) interrupt->SetLevel(oldLevel);	// re-enable interrupts
+    
 }
 
 void Lock::Release() 
 {
     ASSERT(isHeldByCurrentThread());   // illegal check
 
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
-    
-    Thread* leavingThread = (Thread*)lockQueue -> Remove();  // void* -> Thread*
-    if (leavingThread!=NULL)    // make thread ready
-    {
-        scheduler->ReadyToRun(leavingThread);       // just the same..
-    }
-
-    /*
-        NOTE:
-        when release lock, the order should be 
-        different (upside-down) from acquire.
-    */
     // print: current Thread name, lock name (for debugging)
     printf("Thread %s releases lock %s\n", currentThread->getName(), name);
+    // the order should be like this.
     holder = NULL;  // holder given to NULL (mesa method)
-    lockFlag = FALSE;
-
-    (void) interrupt->SetLevel(oldLevel);	// re-enable interrupts
+    lockSemaphore->V();
 }
 
 bool Lock::isHeldByCurrentThread()
 {
-    if (holder==currentThread && lockFlag)
+    if (holder==currentThread)
     {
         return TRUE;
     }
@@ -174,12 +149,13 @@ bool Lock::isHeldByCurrentThread()
 Condition::Condition(char* debugName) 
 {
     name = debugName;
-    conditionQueue = new List;
+    conditionSemaphore = new Semaphore("conditionSemaphore", 0);    // init as 0
+    waitCount=0;        // init as no waiting thread
 }
 
 Condition::~Condition() 
 {
-    delete conditionQueue;
+    delete conditionSemaphore;
 }
 
 void Condition::Wait(Lock* conditionLock) 
@@ -187,44 +163,35 @@ void Condition::Wait(Lock* conditionLock)
     // wait for.
     // ASSERT(FALSE); 
     ASSERT(conditionLock->isHeldByCurrentThread());     // check illegal: if it's held.
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
-    
+
     conditionLock->Release();
-    conditionQueue->Append(currentThread);   //block. Sleep with Int Off won't make problems.
-    currentThread->Sleep();
+    conditionSemaphore->P();    // block. 
+    waitCount+=1;               // one more is waiting.
+    // may use ++ next time :)
     conditionLock->Acquire();
 
-    (void) interrupt->SetLevel(oldLevel);	// re-enable interrupts
 }
 
 void Condition::Signal(Lock* conditionLock) 
 {
+    // to call up one thread.
     ASSERT(conditionLock->isHeldByCurrentThread());
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
-
-    Thread* leavingThread = (Thread*)conditionQueue -> Remove();  // void* -> Thread*
-    if (leavingThread!=NULL)
+    
+    if (waitCount)  // if >0
     {
-        scheduler->ReadyToRun(leavingThread);
+        conditionSemaphore->V();
+        waitCount-=1;
     }
-    // same as Lock.
-
-    (void) interrupt->SetLevel(oldLevel);	// re-enable interrupts
 }
 
 void Condition::Broadcast(Lock* conditionLock) 
 {
     ASSERT(conditionLock->isHeldByCurrentThread());
-    IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
 
-    Thread* leavingThread = (Thread*)conditionQueue -> Remove();  // void* -> Thread*
-    while (leavingThread!=NULL)
+    // awake all.
+    while (waitCount)   // while >0
     {
-        // awake all.
-        scheduler->ReadyToRun(leavingThread);
-        leavingThread = (Thread*)conditionQueue -> Remove();  // void* -> Thread*
+        conditionSemaphore->V();
+        waitCount-=1;
     }
-    // same as Lock.
-
-    (void) interrupt->SetLevel(oldLevel);	// re-enable interrupts
 }

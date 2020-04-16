@@ -81,11 +81,10 @@ class Lock {
     char* name;				// for debugging
     // plus some other stuff you'll need to define
 
-    // NOTE: when use Lock, there's no such value as semphores to indicate
-    List *lockQueue;       // threads waiting in P() for the value to be > 0
-    bool lockFlag;      // if it's locked
+    Semaphore* lockSemaphore;   // semaphore for lock. Just as queue in sleep.
     Thread* holder;     // the holder of lock
-
+    // bool lockFlag;     // now use value rather than lockFlag.
+    
 };
 
 // The following class defines a "condition variable".  A condition
@@ -138,6 +137,8 @@ class Condition {
   private:
     char* name;
     // plus some other stuff you'll need to define
-    List* conditionQueue;
+    Semaphore* conditionSemaphore;    // as the same format as sleep.
+    int waitCount;    // count of waiting threads.
+
 };
 #endif // SYNCH_H
