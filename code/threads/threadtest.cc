@@ -14,17 +14,33 @@
 #include "system.h"
 #include "dllist.h"
 #include <time.h>
+#include "synch.h"
+#include "Table.h"
+#include "BoundedBuffer.h"
 
 // testNum is set in main.cc
 int testNum = 2;
 int threadNum = 2;
 int n = 5;
 int kindIncorrect = 0;
+int bufferSizeTest = 5;
+
+
+int isLocked;
+int isTabled;
+int isBuffered;
 
 DLList *D;
 
 extern void InsertItem(int n, DLList *D, int thread_num);
 extern void RemoveItem(int n, DLList *D, int thread_num);
+extern void TableInsert(int size, int which);
+extern void TableRemove(int size, int which);
+extern void BufferAdd(int size);
+extern void BufferDelete(int size);
+
+Lock *dllistLock=new Lock("dllist lock");
+Condition *dllistConditon=new Condition("dllist condition");
 
 //----------------------------------------------------------------------
 // SimpleThread
@@ -46,10 +62,13 @@ void SimpleThread(int which)
     }
 }
 
-void DLTestThread(int which)
+void DLThread(int which)
 {
+    if(isLocked==1)
+    {
+        dllistLock->Acquire(); // acquire the lock
+    }
     InsertItem(n, D, which);
-
     // error #1
     if (kindIncorrect == 1)
     {
@@ -57,6 +76,37 @@ void DLTestThread(int which)
         currentThread->Yield();
     }
     RemoveItem(n, D, which);
+    if(isLocked==1)
+    {
+        dllistLock->Release(); // release the lock
+    }
+}
+
+void TableThread(int which)
+{
+	if(isTabled == 1)
+    {
+        dllistLock->Acquire(); // acquire the lock
+    }   
+    TableInsert(n, which);
+	currentThread->Yield();
+	TableRemove(n, which);
+    if(isTabled==1)
+    {
+        dllistLock->Release(); // release the lock
+    }
+}
+
+void BufferThread(int which)
+{
+	if(which == 0)
+    {
+        BufferAdd(n);
+    }
+	else if(which==1)
+    {
+        BufferDelete(n);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -86,9 +136,34 @@ void ThreadTestDL()
     for (i = 1; i < threadNum; i++)
     {
         Thread *t = new Thread("forked thread");
-        t->Fork(DLTestThread, i); // fork other threads
+        t->Fork(DLThread, i); // fork other threads
     }
-    DLTestThread(0);  // the first thread
+    DLThread(0);  // the first thread
+}
+
+void ThreadTestTable()
+{
+    DEBUG('t',"Entering ThreadTestTable\n");
+    srand((unsigned)time(NULL));
+    D = new DLList();
+
+    int i;
+    for (i = 1; i < threadNum; i++)
+    {
+        Thread *t = new Thread("forked thread");
+        t->Fork(TableThread, i);
+    }
+    TableThread(0);
+}
+
+void ThreadTestBuffer()
+{
+    DEBUG('t',"Entering ThreadTestBuffer\n");
+    srand((unsigned)time(NULL));
+
+    Thread *t = new Thread("forked thread");
+    t->Fork(BufferThread, 0);
+    BufferThread(1);
 }
 
 //----------------------------------------------------------------------
@@ -111,7 +186,19 @@ void ThreadTest()
         ThreadTest1();
         break;
     case 2:
+        printf("please input 0 or 1(0-unlocked,1-locked):");
+	    scanf("%d",&isLocked);
         ThreadTestDL(); // start Thread for testing
+        break;
+    case 3:
+        printf("please input 0 or 1(0-unlocked,1-locked):");
+	    scanf("%d",&isTabled);
+	    ThreadTestTable();
+        break;
+    case 4:
+        printf("please input 0 or 1(0-unlocked,1-locked):");
+        scanf("%d",&isBuffered);
+        ThreadTestBuffer();
         break;
     default:
         printf("No test specified.\n");
